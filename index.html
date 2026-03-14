@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MERIDIAN — Signal Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=Syne+Mono&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --void: #04040a;
+    --surface-0: #070710;
+    --surface-1: #0c0c1a;
+    --surface-2: #111128;
+    --surface-glass: rgba(11, 11, 24, 0.72);
+    --edge: rgba(255,255,255,0.06);
+    --edge-bright: rgba(255,255,255,0.12);
+    --text-primary: #e8e8f0;
+    --text-secondary: #8888aa;
+    --text-muted: #44445a;
+    --teal: #00e5c8;
+    --teal-dim: rgba(0, 229, 200, 0.15);
+    --teal-glow: rgba(0, 229, 200, 0.08);
+    --amber: #f5a623;
+    --amber-dim: rgba(245, 166, 35, 0.12);
+    --violet: #9b6dff;
+    --violet-dim: rgba(155, 109, 255, 0.12);
+    --font-display: 'Syne', sans-serif;
+    --font-serif: 'DM Serif Display', serif;
+    --font-body: 'Instrument Serif', serif;
+    --font-mono: 'Syne Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--void);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 18px;
+    line-height: 1.7;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  #cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--teal);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s, opacity 0.3s;
+    mix-blend-mode: normal;
+  }
+  #cursor-ring {
+    position: fixed;
+    width: 32px; height: 32px;
+    border: 1px solid rgba(0, 229, 200, 0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), width 0.3s, height 0.3s, opacity 0.3s;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.022;
+    pointer-events: none;
+    z-index: 9997;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 22px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(4,4,10,0.97) 0%, transparent 100%);
+    transition: background 0.4s, border-bottom 0.4s;
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    opacity: 0.9;
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--teal); }
+
+  /* Three nav links only */
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0;
+    width: 0; height: 1px;
+    background: var(--teal);
+    transition: width 0.4s cubic-bezier(0.22,1,0.36,1);
+  }
+  .nav-links a:hover { color: var(--text-primary); }
+  .nav-links a:hover::after { width: 100%; }
+
+  .nav-cta {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--teal);
+    text-decoration: none;
+    border: 1px solid rgba(0,229,200,0.3);
+    padding: 8px 20px;
+    transition: background 0.3s, box-shadow 0.3s, border-color 0.3s;
+  }
+  .nav-cta:hover {
+    background: var(--teal-dim);
+    border-color: var(--teal);
+    box-shadow: 0 0 20px var(--teal-glow);
+  }
+
+  /* Hamburger */
+  .nav-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: none;
+    padding: 4px;
+    background: none;
+    border: none;
+  }
+  .nav-hamburger span {
+    display: block;
+    width: 22px; height: 1px;
+    background: var(--text-secondary);
+    transition: transform 0.3s, opacity 0.3s, background 0.3s;
+    transform-origin: center;
+  }
+  .nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); background: var(--teal); }
+  .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+  .nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); background: var(--teal); }
+
+  /* Mobile drawer */
+  .nav-drawer {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(4,4,10,0.97);
+    backdrop-filter: blur(20px);
+    z-index: 99;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .nav-drawer.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .nav-drawer a {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  .nav-drawer a:hover { color: var(--teal); }
+  .nav-drawer .drawer-cta {
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--teal);
+    border: 1px solid rgba(0,229,200,0.4);
+    padding: 14px 36px;
+    margin-top: 20px;
+  }
+
+  /* ── CONCEPT BANNER ── */
+  #concept-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    padding: 0 24px;
+    pointer-events: none;
+  }
+  .concept-inner {
+    max-width: 800px;
+    margin: 0 auto 20px;
+    background: var(--surface-2);
+    border: 1px solid var(--edge-bright);
+    border-bottom: 2px solid var(--teal);
+    padding: 14px 20px 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    pointer-events: all;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,229,200,0.05);
+    backdrop-filter: blur(12px);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  #concept-banner.hidden .concept-inner {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+  }
+  .concept-pip {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px var(--teal);
+    animation: pip-pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes pip-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .concept-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .concept-text strong {
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+  .concept-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: none;
+    padding: 4px 6px;
+    transition: color 0.3s;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    line-height: 1;
+  }
+  .concept-close:hover { color: var(--text-secondary); }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,200,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,200,0.025) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
+    pointer-events: none;
+  }
+
+  .hero-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+  }
+  .hero-orb-1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,229,200,0.07) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    animation: orb-drift-1 20s ease-in-out infinite;
+  }
+  .hero-orb-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(155,109,255,0.06) 0%, transparent 70%);
+    bottom: 10%; left: 10%;
+    animation: orb-drift-2 25s ease-in-out infinite;
+  }
+
+  @keyframes orb-drift-1 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(-40px, 30px); }
+    66% { transform: translate(20px, -20px); }
+  }
+  @keyframes orb-drift-2 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(30px, -40px); }
+  }
+
+  .hero-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fade-in-up 1s cubic-bezier(0.22,1,0.36,1) 0.4s forwards;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero-label::before {
+    content: '';
+    display: inline-block;
+    width: 32px; height: 1px;
+    background: var(--teal);
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 8vw, 110px);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    max-width: 900px;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fade-in-up 1s cubic-bezier(0.22,1,0.36,1) 0.6s forwards;
+  }
+  .hero-title .line-2 {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(232,232,240,0.25);
+  }
+  .hero-title .teal { color: var(--teal); }
+
+  .hero-sub {
+    font-family: var(--font-body);
+    font-size: 19px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    max-width: 480px;
+    margin-bottom: 56px;
+    opacity: 0;
+    animation: fade-in-up 1s cubic-bezier(0.22,1,0.36,1) 0.8s forwards;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    opacity: 0;
+    animation: fade-in-up 1s cubic-bezier(0.22,1,0.36,1) 1s forwards;
+  }
+
+  .btn-primary {
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--void);
+    background: var(--teal);
+    padding: 16px 36px;
+    text-decoration: none;
+    display: inline-block;
+    position: relative;
+    transition: box-shadow 0.4s, transform 0.3s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 40px rgba(0,229,200,0.35), 0 0 80px rgba(0,229,200,0.1);
+    transform: translateY(-2px);
+  }
+
+  .btn-ghost {
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.3s;
+  }
+  .btn-ghost:hover { color: var(--text-primary); }
+  .btn-ghost .arrow {
+    width: 24px; height: 1px;
+    background: currentColor;
+    position: relative;
+    transition: width 0.4s;
+  }
+  .btn-ghost:hover .arrow { width: 36px; }
+  .btn-ghost .arrow::after {
+    content: '';
+    position: absolute;
+    right: 0; top: -3px;
+    width: 6px; height: 6px;
+    border-top: 1px solid currentColor;
+    border-right: 1px solid currentColor;
+    transform: rotate(45deg);
+  }
+
+  .hero-scroll-hint {
+    position: absolute;
+    bottom: 40px; left: 48px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    animation: fade-in 1s ease 1.6s forwards;
+  }
+  .scroll-bar {
+    width: 1px; height: 40px;
+    background: linear-gradient(to bottom, var(--teal), transparent);
+    animation: scroll-pulse 2s ease-in-out infinite;
+  }
+  @keyframes scroll-pulse {
+    0%, 100% { opacity: 0.4; transform: scaleY(1); }
+    50% { opacity: 1; transform: scaleY(1.2); }
+  }
+
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* ── MARQUEE ── */
+  .marquee-strip {
+    border-top: 1px solid var(--edge);
+    border-bottom: 1px solid var(--edge);
+    padding: 16px 0;
+    overflow: hidden;
+    background: var(--surface-0);
+  }
+  .marquee-track {
+    display: flex;
+    gap: 60px;
+    animation: marquee 30s linear infinite;
+    white-space: nowrap;
+  }
+  .marquee-item {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+  .marquee-dot { width: 3px; height: 3px; background: var(--teal); border-radius: 50%; }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ── SECTIONS COMMON ── */
+  section { padding: 140px 48px; position: relative; }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 20px; height: 1px;
+    background: var(--teal);
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+  }
+  .section-body {
+    font-size: 18px;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    max-width: 560px;
+  }
+
+  /* ── INTRO / MANIFESTO ── */
+  #manifesto {
+    background: var(--surface-0);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .manifesto-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+  .manifesto-quote {
+    font-family: var(--font-serif);
+    font-size: clamp(26px, 4vw, 48px);
+    font-style: italic;
+    line-height: 1.3;
+    color: var(--text-primary);
+    max-width: 860px;
+    margin-bottom: 48px;
+    position: relative;
+  }
+  .manifesto-quote .highlight-teal { color: var(--teal); font-style: normal; }
+  .manifesto-quote .highlight-amber { color: var(--amber); font-style: normal; }
+  .rule-line {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--teal), transparent);
+    margin: 0 auto 48px;
+  }
+  .manifesto-sub {
+    font-size: 16px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    max-width: 460px;
+    line-height: 1.8;
+  }
+
+  /* ── WHAT IS MERIDIAN ── */
+  #platform {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .platform-visual {
+    position: relative;
+    aspect-ratio: 1;
+    max-width: 500px;
+  }
+  .platform-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: ring-rotate 30s linear infinite;
+  }
+  .ring-1 { width: 80%; height: 80%; border-color: rgba(0,229,200,0.15); animation-duration: 40s; }
+  .ring-2 { width: 60%; height: 60%; border-color: rgba(155,109,255,0.12); animation-direction: reverse; animation-duration: 28s; }
+  .ring-3 { width: 40%; height: 40%; border-color: rgba(245,166,35,0.1); animation-duration: 18s; }
+  @keyframes ring-rotate {
+    from { transform: translate(-50%,-50%) rotate(0deg); }
+    to { transform: translate(-50%,-50%) rotate(360deg); }
+  }
+  .ring-1::before, .ring-2::before, .ring-3::before {
+    content: '';
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    top: -3px; left: 50%;
+    transform: translateX(-50%);
+  }
+  .ring-1::before { background: var(--teal); box-shadow: 0 0 12px var(--teal); }
+  .ring-2::before { background: var(--violet); box-shadow: 0 0 12px var(--violet); }
+  .ring-3::before { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+
+  .platform-core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px; height: 120px;
+    background: var(--surface-1);
+    border-radius: 50%;
+    border: 1px solid var(--edge-bright);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 0 60px rgba(0,229,200,0.08), inset 0 0 30px rgba(0,0,0,0.5);
+  }
+  .core-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--teal);
+    text-transform: uppercase;
+  }
+  .core-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  /* ── CAPABILITIES ── */
+  #capabilities {
+    background: var(--surface-0);
+  }
+  .cap-header {
+    max-width: 640px;
+    margin-bottom: 80px;
+  }
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--edge);
+  }
+  .cap-card {
+    background: var(--surface-1);
+    padding: 48px 36px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.4s;
+  }
+  .cap-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: transparent;
+    transition: background 0.4s;
+  }
+  .cap-card:hover { background: var(--surface-2); }
+  .cap-card:hover::before { background: var(--teal); }
+
+  .cap-card.accent-amber:hover::before { background: var(--amber); }
+  .cap-card.accent-violet:hover::before { background: var(--violet); }
+
+  .cap-number {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+  }
+  .cap-icon {
+    width: 40px; height: 40px;
+    margin-bottom: 24px;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+  }
+  .cap-card:hover .cap-icon { opacity: 1; }
+  .cap-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+  .cap-desc {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+  .cap-card .glow-corner {
+    position: absolute;
+    bottom: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+    filter: blur(40px);
+  }
+  .cap-card:hover .glow-corner { opacity: 1; }
+  .cap-card .glow-corner.teal { background: var(--teal); }
+  .cap-card .glow-corner.amber { background: var(--amber); }
+  .cap-card .glow-corner.violet { background: var(--violet); }
+
+  /* ── SIGNAL FEED (product demo) ── */
+  #signal {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .signal-terminal {
+    background: var(--surface-1);
+    border: 1px solid var(--edge);
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.5), 0 0 0 1px var(--edge);
+  }
+  .terminal-bar {
+    background: var(--surface-0);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--edge);
+  }
+  .term-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .term-dot:nth-child(1) { background: rgba(255,100,80,0.5); }
+  .term-dot:nth-child(2) { background: rgba(255,180,50,0.5); }
+  .term-dot:nth-child(3) { background: rgba(80,200,120,0.5); }
+  .terminal-title {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    margin-right: auto;
+  }
+  .terminal-body {
+    padding: 28px 24px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 2;
+  }
+  .t-line { display: flex; gap: 12px; align-items: baseline; }
+  .t-time { color: var(--text-muted); flex-shrink: 0; }
+  .t-tag {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+  .t-tag.high { background: rgba(0,229,200,0.15); color: var(--teal); }
+  .t-tag.med { background: rgba(245,166,35,0.12); color: var(--amber); }
+  .t-tag.low { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+  .t-text { color: var(--text-secondary); font-size: 11.5px; }
+  .t-text .em { color: var(--text-primary); }
+  .t-separator { height: 1px; background: var(--edge); margin: 8px 0; }
+  .t-cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--teal);
+    animation: blink 1.2s step-end infinite;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* ── NUMBERS ── */
+  #numbers {
+    background: var(--surface-0);
+    text-align: center;
+  }
+  .numbers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--edge);
+    margin-top: 80px;
+  }
+  .number-cell {
+    background: var(--surface-1);
+    padding: 48px 24px;
+    position: relative;
+  }
+  .number-val {
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+  .number-val.c-teal { color: var(--teal); }
+  .number-val.c-amber { color: var(--amber); }
+  .number-val.c-violet { color: var(--violet); }
+  .number-val.c-white { color: var(--text-primary); }
+  .number-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── HOW IT WORKS ── */
+  #process {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  #process .section-title { text-align: center; }
+  #process .section-label { justify-content: center; }
+  #process .section-label::before { display: none; }
+  .process-steps {
+    margin-top: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .process-step {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 40px;
+    padding: 48px 0;
+    border-bottom: 1px solid var(--edge);
+    position: relative;
+    overflow: hidden;
+  }
+  .process-step::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: linear-gradient(to right, var(--teal-glow), transparent);
+    transition: width 0.6s cubic-bezier(0.22,1,0.36,1);
+  }
+  .process-step:hover::before { width: 100%; }
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--teal);
+    padding-top: 4px;
+  }
+
+  .step-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  .step-desc {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+  .step-tag {
+    display: inline-block;
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border: 1px solid var(--edge);
+    padding: 4px 10px;
+  }
+
+  /* ── TESTIMONIAL ── */
+  #proof {
+    background: var(--surface-0);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 120px 48px;
+  }
+  .testimonial-block {
+    max-width: 780px;
+  }
+  .testimonial-quote-mark {
+    font-family: var(--font-serif);
+    font-size: 120px;
+    line-height: 0.5;
+    color: var(--teal);
+    opacity: 0.3;
+    margin-bottom: 32px;
+    display: block;
+  }
+  .testimonial-text {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(20px, 2.5vw, 30px);
+    line-height: 1.55;
+    color: var(--text-primary);
+    margin-bottom: 40px;
+  }
+  .testimonial-attr {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .testimonial-attr strong {
+    color: var(--amber);
+    font-weight: 400;
+  }
+  .proof-logos {
+    display: flex;
+    gap: 48px;
+    align-items: center;
+    margin-top: 80px;
+    opacity: 0.3;
+    filter: grayscale(1);
+  }
+  .proof-logo {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+
+  /* ── PRICING ── */
+  #pricing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .pricing-header { text-align: center; max-width: 560px; margin-bottom: 80px; }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--edge);
+    width: 100%;
+    max-width: 1100px;
+  }
+  .pricing-card {
+    background: var(--surface-1);
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+  .pricing-card.featured {
+    background: var(--surface-2);
+    border-top: 2px solid var(--teal);
+  }
+  .pricing-card.featured::before {
+    content: 'Most Selected';
+    position: absolute;
+    top: 16px; right: 24px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--teal);
+  }
+  .pricing-tier {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+  .pricing-price {
+    font-family: var(--font-display);
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+  .pricing-price sup {
+    font-size: 20px;
+    vertical-align: top;
+    margin-top: 8px;
+    font-weight: 400;
+  }
+  .pricing-period {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 40px;
+  }
+  .pricing-features {
+    list-style: none;
+    margin-bottom: 40px;
+  }
+  .pricing-features li {
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--edge);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.4;
+  }
+  .pricing-features li::before {
+    content: '—';
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+  .pricing-features li.active { color: var(--text-primary); }
+  .pricing-features li.active::before { content: '·'; color: var(--teal); font-size: 20px; }
+  .btn-pricing {
+    display: block;
+    text-align: center;
+    padding: 14px 24px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid var(--edge-bright);
+    color: var(--text-secondary);
+    transition: all 0.3s;
+    background: transparent;
+    cursor: none;
+  }
+  .btn-pricing:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+  .btn-pricing.featured-btn {
+    background: var(--teal);
+    color: var(--void);
+    border-color: var(--teal);
+  }
+  .btn-pricing.featured-btn:hover {
+    box-shadow: 0 0 40px rgba(0,229,200,0.3);
+  }
+
+  /* ── CTA ── */
+  #cta {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    background: var(--void);
+  }
+  .cta-ambient {
+    position: absolute;
+    bottom: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 700px; height: 500px;
+    background: radial-gradient(ellipse, rgba(0,229,200,0.08) 0%, rgba(0,229,200,0.03) 40%, transparent 70%);
+    pointer-events: none;
+    filter: blur(20px);
+  }
+  .cta-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 40px;
+  }
+  .cta-headline {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 6vw, 80px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    max-width: 800px;
+    margin-bottom: 32px;
+  }
+  .cta-headline .ghost-text {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(232,232,240,0.2);
+  }
+  .cta-sub {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 440px;
+    margin-bottom: 64px;
+    line-height: 1.7;
+  }
+  .cta-button-wrap {
+    position: relative;
+    display: inline-block;
+  }
+  .cta-button-glow {
+    position: absolute;
+    inset: -20px;
+    background: radial-gradient(ellipse, rgba(0,229,200,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    animation: cta-pulse 3s ease-in-out infinite;
+  }
+  @keyframes cta-pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+  .cta-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 48px;
+    background: transparent;
+    border: 1px solid rgba(0,229,200,0.5);
+    color: var(--teal);
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.4s, border-color 0.4s, box-shadow 0.4s, color 0.4s;
+    cursor: none;
+  }
+  .cta-button:hover {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--void);
+    box-shadow: 0 0 60px rgba(0,229,200,0.25), 0 0 120px rgba(0,229,200,0.1);
+  }
+  .cta-fine {
+    margin-top: 32px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--surface-0);
+    border-top: 1px solid var(--edge);
+    padding: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+    gap: 32px;
+  }
+  .footer-logo {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+  .footer-logo span { color: var(--teal); }
+  .footer-tagline {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .footer-nav {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    list-style: none;
+  }
+  .footer-nav a {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  .footer-nav a:hover { color: var(--text-secondary); }
+  .footer-copy {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+  }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.9s cubic-bezier(0.22,1,0.36,1), transform 0.9s cubic-bezier(0.22,1,0.36,1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.35s; }
+  .reveal-delay-4 { transition-delay: 0.5s; }
+  .reveal-delay-5 { transition-delay: 0.65s; }
+
+  /* ── RESPONSIVE SIMPLIFICATIONS ── */
+  @media (max-width: 900px) {
+    nav { padding: 20px 24px; }
+    .nav-links, .nav-cta { display: none; }
+    .nav-hamburger { display: flex; }
+    .nav-drawer { display: flex; }
+    section { padding: 80px 24px; }
+    #platform { grid-template-columns: 1fr; gap: 40px; }
+    #signal { grid-template-columns: 1fr; gap: 40px; }
+    .cap-grid { grid-template-columns: 1fr; }
+    .numbers-grid { grid-template-columns: repeat(2, 1fr); }
+    .pricing-grid { grid-template-columns: 1fr; }
+    footer { grid-template-columns: 1fr; text-align: center; gap: 24px; }
+    .footer-nav { flex-direction: column; gap: 16px; }
+    .footer-copy { text-align: center; }
+    #hero { padding: 120px 24px 60px; }
+    .hero-title { font-size: clamp(40px, 10vw, 80px); }
+    .hero-actions { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .hero-sub { margin-bottom: 32px; }
+    .section-title { font-size: clamp(32px, 8vw, 56px); }
+    .concept-inner { gap: 8px; }
+    .concept-pip { display: none; }
+    .process-step { grid-template-columns: 1fr; gap: 16px; padding: 32px 0; }
+    .cta-headline { font-size: clamp(32px, 8vw, 60px); }
+  }
+
+  @media (max-width: 600px) {
+    .numbers-grid { grid-template-columns: 1fr; }
+    .manifesto-quote { font-size: clamp(24px, 6vw, 36px); }
+    .cap-card { padding: 32px 24px; }
+    .number-cell { padding: 32px 24px; }
+    .t-line { flex-direction: column; gap: 4px; align-items: flex-start; }
+    .terminal-title { display: none; }
+    .pricing-card { padding: 32px 24px; }
+    .cta-button { padding: 16px 24px; font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- CONCEPT BANNER -->
+<div id="concept-banner">
+  <div class="concept-inner">
+    <span class="concept-pip"></span>
+    <span class="concept-text">This is a <strong>design concept</strong> — Meridian is a fictional intelligence platform created as a dark-mode landing page showcase.</span>
+    <button class="concept-close" id="closeBanner" aria-label="Dismiss">✕</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#hero">MER<span>I</span>DIAN</a>
+  <ul class="nav-links">
+    <li><a href="#capabilities">Capabilities</a></li>
+    <li><a href="#signal">Signal Feed</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <a href="#cta" class="nav-cta">Request Access</a>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE DRAWER -->
+<div class="nav-drawer" id="drawer">
+  <a href="#capabilities" class="drawer-link">Capabilities</a>
+  <a href="#signal" class="drawer-link">Signal Feed</a>
+  <a href="#pricing" class="drawer-link">Pricing</a>
+  <a href="#cta" class="drawer-cta">Request Access</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid-overlay"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+
+  <div class="hero-label">High-Signal Intelligence Platform &nbsp;·&nbsp; Est. 2024</div>
+
+  <h1 class="hero-title">
+    See What<br>
+    <span class="line-2">The Noise</span><br>
+    <span class="teal">Obscures</span>
+  </h1>
+
+  <p class="hero-sub">
+    Meridian distills the signal from every market, field, and discipline that matters to you — surfacing what's actually changing, and why it changes everything.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#cta" class="btn-primary">Begin Listening</a>
+    <a href="#platform" class="btn-ghost">
+      <span class="arrow"></span>
+      What is Meridian
+    </a>
+  </div>
+
+  <div class="hero-scroll-hint">
+    <div class="scroll-bar"></div>
+    Scroll to reveal
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-strip">
+  <div class="marquee-track">
+    <span class="marquee-item"><span class="marquee-dot"></span>Geopolitical Shifts</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Scientific Preprints</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Capital Flows</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Technology Vectors</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Regulatory Signals</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Supply Chain Intelligence</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Cultural Emergence</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Infrastructure Stress</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Geopolitical Shifts</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Scientific Preprints</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Capital Flows</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Technology Vectors</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Regulatory Signals</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Supply Chain Intelligence</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Cultural Emergence</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Infrastructure Stress</span>
+  </div>
+</div>
+
+<!-- MANIFESTO -->
+<section id="manifesto">
+  <div class="manifesto-eyebrow">A Philosophy of Clarity</div>
+  <p class="manifesto-quote reveal">
+    "Most intelligence platforms give you more to read.<br>
+    Meridian gives you <span class="highlight-teal">less to carry</span> — and <span class="highlight-amber">more to act on</span>."
+  </p>
+  <div class="rule-line reveal reveal-delay-1"></div>
+  <p class="manifesto-sub reveal reveal-delay-2">
+    We believe the most valuable insight is the one that arrives before everyone else sees it. Meridian is built for the people who know the difference between information and intelligence.
+  </p>
+</section>
+
+<!-- PLATFORM -->
+<section id="platform">
+  <div class="platform-visual reveal">
+    <div class="platform-ring ring-1"></div>
+    <div class="platform-ring ring-2"></div>
+    <div class="platform-ring ring-3"></div>
+    <div class="platform-core">
+      <span class="core-label">Live</span>
+      <span class="core-value">∞</span>
+    </div>
+  </div>
+
+  <div class="platform-text">
+    <div class="section-label reveal">The Platform</div>
+    <h2 class="section-title reveal reveal-delay-1">
+      Constant Orbit.<br>Zero Drift.
+    </h2>
+    <p class="section-body reveal reveal-delay-2">
+      Meridian operates as a continuous intelligence layer — monitoring thousands of primary sources, research feeds, and weak signals across every domain you track. Not a newsletter. Not a digest. A live orbit around the things that matter.
+    </p>
+    <p class="section-body reveal reveal-delay-3" style="margin-top: 20px; font-size: 16px; color: var(--text-muted);">
+      Our synthesis engine doesn't summarize — it contextualizes. Every signal is mapped against your knowledge graph, surfacing connections that a human analyst would take weeks to draw.
+    </p>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section id="capabilities">
+  <div class="cap-header">
+    <div class="section-label reveal">Capabilities</div>
+    <h2 class="section-title reveal reveal-delay-1">Built for<br>the long game.</h2>
+  </div>
+
+  <div class="cap-grid">
+    <div class="cap-card reveal">
+      <div class="cap-number">01</div>
+      <svg class="cap-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="14" stroke="#00e5c8" stroke-width="1"/>
+        <path d="M20 6 L20 34 M6 20 L34 20" stroke="#00e5c8" stroke-width="0.8" opacity="0.5"/>
+        <circle cx="20" cy="20" r="3" fill="#00e5c8"/>
+      </svg>
+      <div class="cap-title">Signal Triangulation</div>
+      <p class="cap-desc">Cross-references thousands of primary sources to separate genuine signal from amplified noise — surfacing what's early, not what's loud.</p>
+      <div class="glow-corner teal"></div>
+    </div>
+
+    <div class="cap-card accent-amber reveal reveal-delay-1">
+      <div class="cap-number">02</div>
+      <svg class="cap-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="6" y="6" width="12" height="12" stroke="#f5a623" stroke-width="1"/>
+        <rect x="22" y="6" width="12" height="12" stroke="#f5a623" stroke-width="1" opacity="0.5"/>
+        <rect x="6" y="22" width="12" height="12" stroke="#f5a623" stroke-width="1" opacity="0.5"/>
+        <rect x="22" y="22" width="12" height="12" stroke="#f5a623" stroke-width="1"/>
+        <line x1="18" y1="12" x2="22" y2="12" stroke="#f5a623" stroke-width="0.8"/>
+        <line x1="12" y1="18" x2="12" y2="22" stroke="#f5a623" stroke-width="0.8"/>
+        <line x1="28" y1="18" x2="28" y2="22" stroke="#f5a623" stroke-width="0.8"/>
+        <line x1="18" y1="28" x2="22" y2="28" stroke="#f5a623" stroke-width="0.8"/>
+      </svg>
+      <div class="cap-title">Knowledge Graph</div>
+      <p class="cap-desc">Every briefing builds your personal intelligence architecture — connecting entities, events, and ideas across time into a persistent map of what you know.</p>
+      <div class="glow-corner amber"></div>
+    </div>
+
+    <div class="cap-card accent-violet reveal reveal-delay-2">
+      <div class="cap-number">03</div>
+      <svg class="cap-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 32 L16 18 L24 26 L32 10" stroke="#9b6dff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="8" cy="32" r="2" fill="#9b6dff"/>
+        <circle cx="32" cy="10" r="2" fill="#9b6dff"/>
+      </svg>
+      <div class="cap-title">Trajectory Modeling</div>
+      <p class="cap-desc">Not prediction — probability architecture. Meridian maps what scenarios are structurally possible, their velocity, and their second-order effects on your world.</p>
+      <div class="glow-corner violet"></div>
+    </div>
+
+    <div class="cap-card reveal">
+      <div class="cap-number">04</div>
+      <svg class="cap-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 8 L34 20 L20 32 L6 20 Z" stroke="#00e5c8" stroke-width="1"/>
+        <path d="M20 14 L28 20 L20 26 L12 20 Z" stroke="#00e5c8" stroke-width="0.6" opacity="0.5"/>
+        <circle cx="20" cy="20" r="3" fill="#00e5c8" opacity="0.6"/>
+      </svg>
+      <div class="cap-title">Domain Fusion</div>
+      <p class="cap-desc">Intelligence that crosses disciplines — because the most important developments in finance often begin as anomalies in biology, and vice versa.</p>
+      <div class="glow-corner teal"></div>
+    </div>
+
+    <div class="cap-card accent-amber reveal reveal-delay-1">
+      <div class="cap-number">05</div>
+      <svg class="cap-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="12" stroke="#f5a623" stroke-width="1" stroke-dasharray="4 3"/>
+        <circle cx="20" cy="20" r="4" fill="#f5a623" opacity="0.3"/>
+        <circle cx="20" cy="20" r="1.5" fill="#f5a623"/>
+        <line x1="20" y1="8" x2="20" y2="12" stroke="#f5a623" stroke-width="1"/>
+        <line x1="20" y1="28" x2="20" y2="32" stroke="#f5a623" stroke-width="1"/>
+        <line x1="8" y1="20" x2="12" y2="20" stroke="#f5a623" stroke-width="1"/>
+        <line x1="28" y1="20" x2="32" y2="20" stroke="#f5a623" stroke-width="1"/>
+      </svg>
+      <div class="cap-title">Silent Monitoring</div>
+      <p class="cap-desc">Operates without distraction. No pings, no feeds to scroll, no dashboards to refresh. Meridian surfaces what matters through your briefing — nothing more.</p>
+      <div class="glow-corner amber"></div>
+    </div>
+
+    <div class="cap-card accent-violet reveal reveal-delay-2">
+      <div class="cap-number">06</div>
+      <svg class="cap-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="14" width="24" height="16" rx="1" stroke="#9b6dff" stroke-width="1"/>
+        <path d="M14 14 L14 10 L26 10 L26 14" stroke="#9b6dff" stroke-width="1"/>
+        <line x1="16" y1="20" x2="24" y2="20" stroke="#9b6dff" stroke-width="0.8"/>
+        <line x1="16" y1="24" x2="21" y2="24" stroke="#9b6dff" stroke-width="0.8" opacity="0.5"/>
+      </svg>
+      <div class="cap-title">Analyst Briefings</div>
+      <p class="cap-desc">Weekly deep-synthesis documents written by Meridian's intelligence layer — formatted for reading, not scanning. Long-form clarity for consequential decisions.</p>
+      <div class="glow-corner violet"></div>
+    </div>
+  </div>
+</section>
+
+<!-- SIGNAL FEED -->
+<section id="signal">
+  <div>
+    <div class="section-label reveal">Live Signal Feed</div>
+    <h2 class="section-title reveal reveal-delay-1">
+      The brief,<br>as it forms.
+    </h2>
+    <p class="section-body reveal reveal-delay-2">
+      Meridian's signal terminal updates continuously — not with raw news, but with classified and contextualized events as they cross significance thresholds. High, Medium, or Monitor — you always know the weight.
+    </p>
+    <p class="section-body reveal reveal-delay-3" style="margin-top: 20px; font-size: 15px; color: var(--text-muted);">
+      Each signal links to source, related knowledge graph nodes, and historical analogues. The terminal is not your inbox. It's your antechamber.
+    </p>
+  </div>
+
+  <div class="signal-terminal reveal reveal-delay-1">
+    <div class="terminal-bar">
+      <div class="term-dot"></div>
+      <div class="term-dot"></div>
+      <div class="term-dot"></div>
+      <span class="terminal-title">meridian / live-feed / today</span>
+    </div>
+    <div class="terminal-body">
+      <div class="t-line">
+        <span class="t-time">04:12</span>
+        <span class="t-tag high">High</span>
+        <span class="t-text"><span class="em">Taiwan Strait passage</span> by three vessels — irregular routing ↗ supply chain</span>
+      </div>
+      <div class="t-separator"></div>
+      <div class="t-line">
+        <span class="t-time">06:38</span>
+        <span class="t-tag high">High</span>
+        <span class="t-text">Fed governor dissent on rate path — <span class="em">second in six weeks</span> ↗ capital flows</span>
+      </div>
+      <div class="t-separator"></div>
+      <div class="t-line">
+        <span class="t-time">08:51</span>
+        <span class="t-tag med">Med</span>
+        <span class="t-text">Preprint: novel mRNA target in <span class="em">metabolic regulation</span> — third confirmation ↗ biotech</span>
+      </div>
+      <div class="t-separator"></div>
+      <div class="t-line">
+        <span class="t-time">11:04</span>
+        <span class="t-tag low">Monitor</span>
+        <span class="t-text">EU AI Act enforcement office <span class="em">staffing anomaly</span> — slower than projected</span>
+      </div>
+      <div class="t-separator"></div>
+      <div class="t-line">
+        <span class="t-time">13:20</span>
+        <span class="t-tag high">High</span>
+        <span class="t-text"><span class="em">Sovereign wealth reallocation</span> — Gulf cluster moves into infrastructure ↗ energy</span>
+      </div>
+      <div class="t-separator"></div>
+      <div class="t-line">
+        <span class="t-time">now</span>
+        <span class="t-tag med">Med</span>
+        <span class="t-text">Seismic activity ↗ rare earth supply corridor — <span class="em">third event this month</span><span class="t-cursor"></span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NUMBERS -->
+<section id="numbers">
+  <div class="section-label reveal" style="justify-content:center; margin-bottom: 0;">
+    By the Numbers
+  </div>
+  <h2 class="section-title reveal reveal-delay-1" style="text-align:center;">
+    Signal at Scale.
+  </h2>
+  <div class="numbers-grid">
+    <div class="number-cell reveal">
+      <div class="number-val c-teal">14k+</div>
+      <div class="number-label">Sources Monitored</div>
+    </div>
+    <div class="number-cell reveal reveal-delay-1">
+      <div class="number-val c-amber">97%</div>
+      <div class="number-label">Early Signal Accuracy</div>
+    </div>
+    <div class="number-cell reveal reveal-delay-2">
+      <div class="number-val c-violet">6 min</div>
+      <div class="number-label">Avg. Detection to Brief</div>
+    </div>
+    <div class="number-cell reveal reveal-delay-3">
+      <div class="number-val c-white">40+</div>
+      <div class="number-label">Domains in Orbit</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process" style="padding: 140px 48px;">
+  <div class="section-label reveal">How It Works</div>
+  <h2 class="section-title reveal reveal-delay-1">Tuned, not trained.<br>Refined over time.</h2>
+
+  <div class="process-steps">
+    <div class="process-step reveal">
+      <div class="step-num">01 —</div>
+      <div class="step-content">
+        <div class="step-title">You define your meridian</div>
+        <p class="step-desc">Onboarding begins with a structured interview — not a tag cloud. We map your professional terrain, decision horizons, and epistemic blind spots.</p>
+        <span class="step-tag">Intelligence Profile</span>
+      </div>
+    </div>
+    <div class="process-step reveal reveal-delay-1">
+      <div class="step-num">02 —</div>
+      <div class="step-content">
+        <div class="step-title">The orbit begins</div>
+        <p class="step-desc">Meridian starts circling your domain — ingesting primary sources, cross-referencing weak signals, building the graph of what you know versus what's changing.</p>
+        <span class="step-tag">Continuous Monitoring</span>
+      </div>
+    </div>
+    <div class="process-step reveal reveal-delay-2">
+      <div class="step-num">03 —</div>
+      <div class="step-content">
+        <div class="step-title">Signal arrives before the noise</div>
+        <p class="step-desc">Events that cross your significance thresholds appear in your feed — with context, with analogues, and with implications mapped before the story breaks everywhere else.</p>
+        <span class="step-tag">Threshold Intelligence</span>
+      </div>
+    </div>
+    <div class="process-step reveal reveal-delay-3">
+      <div class="step-num">04 —</div>
+      <div class="step-content">
+        <div class="step-title">The weekly brief deepens</div>
+        <p class="step-desc">Every Sunday, a long-form synthesis document arrives — written by Meridian's synthesis layer, reviewed for accuracy, formatted for unhurried reading over one hour.</p>
+        <span class="step-tag">Deep Synthesis</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF -->
+<section id="proof">
+  <div class="testimonial-block reveal">
+    <span class="testimonial-quote-mark">"</span>
+    <p class="testimonial-text">
+      Meridian doesn't give me more information. It gives me the right information, seven to ten days before it becomes consensus. In my line of work, that gap is the entire advantage.
+    </p>
+    <div class="testimonial-attr">
+      <strong>Partner, Global Infrastructure Fund</strong> &nbsp;·&nbsp; Member since 2024
+    </div>
+  </div>
+  <div class="proof-logos reveal reveal-delay-2">
+    <div class="proof-logo">Blackmore</div>
+    <div class="proof-logo">Ardent Capital</div>
+    <div class="proof-logo">Lynx Advisory</div>
+    <div class="proof-logo">Folio</div>
+    <div class="proof-logo">Seren</div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="pricing-header">
+    <div class="section-label reveal" style="justify-content:center;">
+      <span style="display:flex;align-items:center;gap:12px;">Access</span>
+    </div>
+    <h2 class="section-title reveal reveal-delay-1">One price.<br>One commitment.</h2>
+    <p class="section-body reveal reveal-delay-2" style="margin:0 auto; text-align:center; font-size:16px;">
+      Meridian is not a freemium product. Three tiers of access — all complete, all intentional.
+    </p>
+  </div>
+
+  <div class="pricing-grid reveal">
+    <div class="pricing-card">
+      <div class="pricing-tier">Observer</div>
+      <div class="pricing-price"><sup>$</sup>149</div>
+      <div class="pricing-period">/ month</div>
+      <ul class="pricing-features">
+        <li class="active">Weekly synthesis brief</li>
+        <li class="active">Single domain orbit</li>
+        <li class="active">Signal feed (48hr delay)</li>
+        <li>Knowledge graph access</li>
+        <li>Multi-domain fusion</li>
+        <li>Priority signal threshold</li>
+      </ul>
+      <a href="#" class="btn-pricing">Begin Observing</a>
+    </div>
+
+    <div class="pricing-card featured">
+      <div class="pricing-tier">Analyst</div>
+      <div class="pricing-price"><sup>$</sup>490</div>
+      <div class="pricing-period">/ month</div>
+      <ul class="pricing-features">
+        <li class="active">Weekly + daily synthesis briefs</li>
+        <li class="active">Up to five domain orbits</li>
+        <li class="active">Live signal feed</li>
+        <li class="active">Full knowledge graph access</li>
+        <li class="active">Cross-domain fusion</li>
+        <li>Priority signal threshold</li>
+      </ul>
+      <a href="#" class="btn-pricing featured-btn">Begin Analysis</a>
+    </div>
+
+    <div class="pricing-card">
+      <div class="pricing-tier">Principal</div>
+      <div class="pricing-price" style="font-size:32px; padding-top: 8px;">Custom</div>
+      <div class="pricing-period" style="margin-top: 8px;">/ annual</div>
+      <ul class="pricing-features">
+        <li class="active">All Analyst features</li>
+        <li class="active">Unlimited orbits + custom domains</li>
+        <li class="active">Dedicated synthesis layer</li>
+        <li class="active">Private knowledge architecture</li>
+        <li class="active">Priority thresholds + escalation</li>
+        <li class="active">Quarterly intelligence reviews</li>
+      </ul>
+      <a href="#" class="btn-pricing">Contact Intelligence</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-ambient"></div>
+  <div class="cta-eyebrow reveal">The signal is already forming</div>
+  <h2 class="cta-headline reveal reveal-delay-1">
+    You're either<br>
+    <span class="ghost-text">in orbit</span><br>
+    or in the dark.
+  </h2>
+  <p class="cta-sub reveal reveal-delay-2">
+    Meridian is available by application only. Onboarding takes 20 minutes. Your first brief arrives within 48 hours.
+  </p>
+  <div class="cta-button-wrap reveal reveal-delay-3">
+    <div class="cta-button-glow"></div>
+    <a href="#" class="cta-button">
+      Apply for Access
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+  <div class="cta-fine reveal reveal-delay-4">By invitation or application &nbsp;·&nbsp; Limited capacity per cycle</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-logo">MER<span>I</span>DIAN</div>
+    <div class="footer-tagline">Signal Intelligence Platform</div>
+  </div>
+  <nav>
+    <ul class="footer-nav">
+      <li><a href="#platform">Platform</a></li>
+      <li><a href="#process">Methodology</a></li>
+      <li><a href="#cta">Contact</a></li>
+    </ul>
+  </nav>
+  <div class="footer-copy">© 2024 Meridian Intelligence, Inc.</div>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = -100, my = -100, rx = -100, ry = -100;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+
+  function animateRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      ring.style.width = '56px';
+      ring.style.height = '56px';
+      ring.style.borderColor = 'rgba(0,229,200,0.6)';
+      cursor.style.transform = 'translate(-50%,-50%) scale(2)';
+    });
+    el.addEventListener('mouseleave', () => {
+      ring.style.width = '32px';
+      ring.style.height = '32px';
+      ring.style.borderColor = 'rgba(0,229,200,0.4)';
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+    });
+  });
+
+  // Hamburger menu
+  const hamburger = document.getElementById('hamburger');
+  const drawer = document.getElementById('drawer');
+  hamburger.addEventListener('click', () => {
+    const open = hamburger.classList.toggle('open');
+    drawer.classList.toggle('open', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  });
+  drawer.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      hamburger.classList.remove('open');
+      drawer.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+
+  // Concept banner dismiss
+  document.getElementById('closeBanner').addEventListener('click', () => {
+    document.getElementById('concept-banner').classList.add('hidden');
+  });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  reveals.forEach(el => observer.observe(el));
+
+  // Nav scroll behavior
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 80) {
+      nav.style.background = 'rgba(4,4,10,0.97)';
+      nav.style.backdropFilter = 'blur(20px)';
+      nav.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+    } else {
+      nav.style.background = 'linear-gradient(to bottom, rgba(4,4,10,0.97) 0%, transparent 100%)';
+      nav.style.backdropFilter = 'none';
+      nav.style.borderBottom = 'none';
+    }
+  });
+</script>
+
+</body>
+</html>
